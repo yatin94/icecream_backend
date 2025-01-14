@@ -44,7 +44,7 @@ async def create_billing(data: SalesBilling, session: SessionDep):
             bill_id=bill_obj.id,
             flavor_id=item.flavor.id,
             flavor_size=item.size.id,
-            flavor_type=item.type.id,
+            flavor_type=item.type,
             base_price=item.basePrice,
             total_price=item.totalPrice
         )

@@ -3,9 +3,6 @@ from sqlmodel import Field, SQLModel
 from typing import Dict, List
 from datetime import datetime
 
-class IceCreamSaleType(BaseModel):
-   id: int
-   type: str
 
 class IceCreamSaleSize(BaseModel):
    id: int
@@ -25,7 +22,7 @@ class SaleFlavor(BaseModel):
 class CustomerProducts(BaseModel):
     count: int
     flavor: SaleFlavor
-    type: IceCreamSaleType
+    type: str
     size: IceCreamSaleSize
     toppings: List[SaleToppings]
     basePrice: float
@@ -65,7 +62,7 @@ class BillItems(SQLModel, table=True):
    id: int | None = Field(default=None, primary_key=True)
    bill_id: int = Field(nullable=False)
    flavor_id: int = Field(nullable=False)
-   flavor_type: int = Field(nullable=False)
+   flavor_type: str = Field(nullable=False)
    flavor_size: int = Field(nullable=False)
    base_price: float  = Field(nullable=False)
    total_price: float = Field(nullable=False, description="base price + toppings price")

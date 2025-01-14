@@ -1,11 +1,10 @@
 from fastapi import APIRouter
-from models.flavors import Flavors, CreateFlavor
-from models.extra import IceCreamSize, IceCreamType
+from models.flavors import Flavors, CreateFlavor, GetFlavorsResponse
 from typing import List
 from database import SessionDep
 from sqlalchemy import delete
 from sqlalchemy import text
-
+from api.functions.extras import get_sizes
 from api.functions.flavors import activate_flavor_by_id, deactivate_flavor_by_id, create_new_flavor
 
 router = APIRouter()
@@ -17,14 +16,38 @@ async def create_flavors(flavor: CreateFlavor, session: SessionDep):
 
 
 @router.get("/flavors")
-async def get_flavors(session: SessionDep, all: str = 'False'):
+async def get_flavors(session: SessionDep, all: str = 'False', type: str = 'all'):
+    print(all)
     if all == "True":
-        raw_sql = text("SELECT * FROM Flavors where is_deleted=0")
+        raw_sql = f"""
+            SELECT *
+            FROM Flavors 
+            WHERE is_deleted = 0
+        """
     else:
-        raw_sql = text("SELECT * FROM Flavors where is_activated = 1 and is_deleted=0")
-    result = session.exec(raw_sql)
-    flavors = [Flavors(**row) for row in result.mappings().all()]
-    return flavors
+        raw_sql = f"""
+            SELECT *
+            FROM Flavors 
+            WHERE is_activated = 1 AND is_deleted = 0
+        """
+    if type == "cone":
+        raw_sql += " AND is_sundae = 0"
+    elif type == 'sundae':
+        raw_sql += " AND is_sundae = 1"
+    result = session.exec(text(raw_sql))
+    flavor_dict = []
+    for row in result:
+        flavor_dict.append(GetFlavorsResponse(
+            flavor_name=row[0],
+            id=row[1],
+            is_sundae=row[2],
+            is_deleted=row[3],
+            is_activated=row[4],
+            size=get_sizes(row[1], session=session),
+        ))
+    return flavor_dict
+
+
 
 
 @router.delete("/flavors/{id}")
@@ -33,10 +56,8 @@ async def delete_flavors(id: int, session: SessionDep):
     flavor.is_deleted = 1
     flavor.is_activated = 0
     flavor = session.get(Flavors, id)
-    update_type = text(f"update IceCreamType set is_deleted = 1 where flavor_id = {flavor.id}")
     update_size = text(f"update IceCreamSize set is_deleted = 1 where flavor_id = {flavor.id}")
     session.exec(update_size)
-    session.exec(update_type)
     session.add(flavor)
     session.commit()
     return {"message":"success"}
