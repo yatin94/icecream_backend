@@ -62,7 +62,7 @@ class BillItems(SQLModel, table=True):
    id: int | None = Field(default=None, primary_key=True)
    bill_id: int = Field(nullable=False)
    flavor_id: int = Field(nullable=False)
-   flavor_type: str = Field(nullable=False)
+   flavor_type: str = Field(nullable=False, description="No use. Use flavor.is_sundae")
    flavor_size: int = Field(nullable=False)
    base_price: float  = Field(nullable=False)
    total_price: float = Field(nullable=False, description="base price + toppings price")
